@@ -1,0 +1,52 @@
+version: '2'
+services:
+  apache:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    links:
+      - mysql:mysqlhost
+      - maildev:localsmtp
+    volumes:
+      - "./docker.php.settings.ini:/usr/local/etc/php/conf.d/docker.php.settings.ini"
+      - "./:/var/www/html"
+      - "/var/www/html/var"
+    ports:
+      - 5742:80
+    environment:
+      - xdebug_remote_host=host.docker.internal
+      - DOCKER_DEBUG=1
+      - DOCKER_CACHE=1
+      - SYMFONY_ENV=dev
+      - SYMFONY_DEBUG=1
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - mysql:db
+    ports:
+      - 8081:80
+    environment:
+      MYSQL_USERNAME: root
+      MYSQL_ROOT_PASSWORD: root
+
+  mysql:
+    image: mysql:5.7
+    volumes:
+      - "./_docker-data-mysql:/var/lib/mysql"
+    ports:
+      - 336:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    command:
+      mysqld --innodb-flush-method=littlesync --innodb-use-native-aio=OFF
+
+
+  maildev:
+    image: maildev/maildev
+    ports:
+      - 1080:80
+
+
